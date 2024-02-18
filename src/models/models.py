@@ -1,89 +1,66 @@
-from typing import List
 from datetime import datetime
-from sqlalchemy import  String, DateTime, ForeignKey
+
+from sqlalchemy import String
+from db import engine
+
+from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import relationship
 from sqlalchemy.orm import Mapped
-from sqlalchemy.orm import mapped_column, relationship
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.ext.hybrid import hybrid_property
-
-Base = declarative_base()
+from sqlalchemy.orm import mapped_column
+from sqlalchemy.sql.schema import ForeignKey
 
 
-class Grade(Base):
-    __tablename__ = "grade"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    grade: Mapped[int] = mapped_column(nullable=False)
-    date_of: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-
-    student_id: Mapped[int] = mapped_column(
-        ForeignKey("student.id", ondelete="CASCADE")
-    )
-    subject_id: Mapped[int] = mapped_column(
-        ForeignKey("subject.id", ondelete="CASCADE")
-    )
-
-    student: Mapped["Student"] = relationship("Student", back_populates="grade")
-    subject: Mapped["Subject"] = relationship("Subject", back_populates="grades")
+class Base(DeclarativeBase):
+    pass
 
 
+# Table: groups
 class Group(Base):
-    __tablename__ = "group"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(nullable=False, unique=True)
-    students: Mapped["Student"] = relationship(
-        "Student", back_populates="group", cascade="all, delete", passive_deletes=True
-    )
+    __tablename__ = "groups"
+    group_id: Mapped[int] = mapped_column(primary_key=True)
+    group_name: Mapped[str] = mapped_column(String(10))
+    students_list: Mapped[list["Student"]] = relationship(back_populates="group")
 
 
+# Table: students
 class Student(Base):
-    __tablename__ = "student"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    first_name: Mapped[str] = mapped_column( nullable=False)
-    last_name: Mapped[str] = mapped_column( nullable=False)
-    email: Mapped[str]
-    phone: Mapped[str]
-    group_id: Mapped[int] = mapped_column(
-        ForeignKey("group.id", ondelete="SET NULL"), nullable=True
-    )
-
-    group: Mapped["Group"] = relationship("Group", back_populates="students")
-    grade: Mapped["Grade"] = relationship("Grade", back_populates="student")
-
-    @hybrid_property
-    def full_name(self):
-        return f"{self.first_name} {self.last_name}"
+    __tablename__ = "students"
+    student_id: Mapped[int] = mapped_column(primary_key=True)
+    student_name: Mapped[str] = mapped_column(String(50))
+    group_id: Mapped[int] = mapped_column(ForeignKey("groups.group_id"))
+    group: Mapped["Group"] = relationship("Group", back_populates="students_list")
 
 
-class Teacher(Base):
-    __tablename__ = "teachers"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    first_name: Mapped[str] = mapped_column(nullable=False)
-    last_name: Mapped[str] = mapped_column(nullable=False)
-    email: Mapped[str]
-    phone: Mapped[str]
-
-    subjects: Mapped[List["Subject"]] = relationship(
-        "Subject",
-        back_populates="teacher",
-        cascade="all, delete",
-        passive_deletes=True,
-    )
-
-    @hybrid_property
-    def full_name(self):
-        return f"{self.first_name} {self.last_name}"
-
-    def __repr__(self):
-        return f"id={self.id}, fullname={self.full_name}, email={self.email}"
+# Table: professors
+class Professor(Base):
+    __tablename__ = "professors"
+    professor_id: Mapped[int] = mapped_column(primary_key=True)
+    professor_name: Mapped[str] = mapped_column(String(50))
 
 
+# Table subjects
 class Subject(Base):
-    __tablename__ = "subject"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
-    teacher_id: Mapped[int] = mapped_column(
-        ForeignKey("teacher.id", ondelete="SET NULL"), nullable=True
-    )
+    __tablename__ = "subjects"
+    subject_id: Mapped[int] = mapped_column(primary_key=True)
+    subject_name: Mapped[str] = mapped_column(String(25), unique=True)
+    professor_id: Mapped[int] = mapped_column(ForeignKey("professors.professor_id"))
+    professor: Mapped["Professor"] = relationship("Professor", backref="subjects")
 
-    teacher: Mapped["Teacher"] = relationship("Teacher", back_populates="subjects")
-    grades: Mapped[List["Grade"]] = relationship("Grade", back_populates="subject")
+
+# Table grades
+class Grade(Base):
+    __tablename__ = "grades"
+    grade_id: Mapped[int] = mapped_column(primary_key=True)
+    student_id: Mapped[int] = mapped_column(ForeignKey("students.student_id"))
+    student: Mapped["Student"] = relationship("Student", backref="grades")
+    subject_id: Mapped[int] = mapped_column(ForeignKey("subjects.subject_id"))
+    subject: Mapped["Subject"] = relationship("Subject", backref="grades")
+    grade: Mapped[int] = mapped_column()
+    date_recieved: Mapped[datetime] = mapped_column()
+
+
+if __name__ == "__main__":
+
+    Base.metadata.drop_all(engine, checkfirst=True)
+    Base.metadata.create_all(engine)
+    Base.metadata.bind = engine
