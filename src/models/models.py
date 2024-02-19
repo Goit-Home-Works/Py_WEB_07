@@ -37,7 +37,6 @@ class Professor(Base):
     professor_id: Mapped[int] = mapped_column(primary_key=True)
     professor_name: Mapped[str] = mapped_column(String(50))
 
-
 # Table subjects
 class Subject(Base):
     __tablename__ = "subjects"
