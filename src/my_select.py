@@ -125,8 +125,8 @@ def select_7():
 
 
 # Знайти середній бал, який ставить певний викладач зі своїх предметів.
-def select_8():
-    result = (
+def select_8(professor_id=None):
+    query = (
         session.query(
             Subject.subject_name,
             Professor.professor_id,
@@ -136,9 +136,11 @@ def select_8():
         .join(Subject)
         .join(Professor)
         .group_by(Subject.subject_name, Professor.professor_id)
-        .filter(Professor.professor_id == 2)
-        .all()
     )
+    if professor_id is not None:
+        query = query.filter(Professor.professor_id == professor_id)
+
+    result = query.all()
     return result
 
 
@@ -178,6 +180,91 @@ def select_10():
     return result
 
 
+# Середній бал, який певний викладач ставить певному студентові.
+def select_11(student_id=None, professor_id=None):
+    query = (
+        session.query(
+            Student.student_name.label("student"),
+            Professor.professor_name.label("professor"),
+            func.round(func.avg(Grade.grade), 2).label("average_grade"),
+        )
+        .join(Grade, Student.student_id == Grade.student_id)
+        .join(Subject, Grade.subject_id == Subject.subject_id)
+        .join(Professor, Subject.professor_id == Professor.professor_id)
+        .group_by(
+            Student.student_name,
+            Professor.professor_name,
+            Student.student_id,
+            Professor.professor_id,
+        )
+        .order_by(Student.student_name, Professor.professor_name)
+    )
+
+    if student_id is not None:
+        query = query.filter(Student.student_id == student_id)
+
+    if professor_id is not None:
+        query = query.filter(Professor.professor_id == professor_id)
+
+    result = query.all()
+    return result
+
+
+# Grades of students in a certain group in a certain subject in the last lesson.
+
+
+def select_12(group_id=None, subject_name=None):
+
+    ranked_grades = (
+        session.query(
+            Group.group_name.label("group"),
+            Subject.subject_name.label("subject"),
+            Student.student_name.label("student"),
+            Grade.grade,
+            Grade.date_recieved,
+            func.row_number()
+            .over(
+                partition_by=(
+                    Subject.subject_name,
+                    Group.group_name,
+                    Student.student_name,
+                ),
+                order_by=desc(Grade.date_recieved),
+            )
+            .label("rnk"),
+        )
+        .select_from(Grade)
+        .join(Student)
+        .join(Subject)
+        .join(Group)
+        .filter(Group.group_id == group_id, Subject.subject_name == subject_name)
+        .cte("RankedGrades")
+    )
+
+    # Main query selecting from the CTE
+    query = (
+        session.query(
+            ranked_grades.c.group,
+            ranked_grades.c.subject,
+            ranked_grades.c.student,
+            ranked_grades.c.grade,
+            ranked_grades.c.date_recieved,
+        )
+        .filter(ranked_grades.c.rnk == 1)
+        .group_by(
+            ranked_grades.c.group,
+            ranked_grades.c.subject,
+            ranked_grades.c.student,
+            ranked_grades.c.grade,
+            ranked_grades.c.date_recieved,  # Fix the column name here
+        )
+        .order_by(desc(ranked_grades.c.grade))
+    )
+    result = query.all()
+
+    return result
+
+
 if __name__ == "__main__":
 
     print(
@@ -210,7 +297,7 @@ if __name__ == "__main__":
     pprint(select_7())
 
     print("\n", "--- QUERY 08 ---\n average grade gave by professor with ID=2")
-    pprint(select_8())
+    pprint(select_8(professor_id=2))
 
     print("\n", "--- QUERY 09 ---\n subjects of student with ID=8")
     pprint(select_9())
@@ -220,3 +307,17 @@ if __name__ == "__main__":
         "--- QUERY 10 ---\n list of subjects taught by the professor with ID=3 to a student with ID=10",
     )
     pprint(select_10())
+
+    print(
+        "\n",
+        "--- QUERY 11 ---\n The average score given by a particular teacher to a particular student.",
+    )
+    pprint(select_11(student_id=19, professor_id=2))
+
+    print(
+        "\n",
+        "--- QUERY 12 ---\n Grades of students in a certain group in a certain subject in the last lesson.",
+    )
+    group_id = 1
+    subject_name = "Python Web"
+    pprint(select_12(group_id, subject_name))
