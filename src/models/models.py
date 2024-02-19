@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import String
-from db import engine
+from .db import engine
 
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import relationship
@@ -57,10 +57,11 @@ class Grade(Base):
     subject: Mapped["Subject"] = relationship("Subject", backref="grades")
     grade: Mapped[int] = mapped_column()
     date_recieved: Mapped[datetime] = mapped_column()
-
-
-if __name__ == "__main__":
-
+ 
+def create_tables():
     Base.metadata.drop_all(engine, checkfirst=True)
     Base.metadata.create_all(engine)
     Base.metadata.bind = engine
+
+if __name__ == "__main__":
+    create_tables()

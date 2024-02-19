@@ -36,7 +36,7 @@ def run_web_app():
 
 def run():
 
-    pass
+    run_web_app()
 
 
 if __name__ == '__main__':

@@ -1,7 +1,6 @@
-#!/usr/bin/env python
-
 import os
 from dotenv import load_dotenv
+import time
 
 # Load environment variables from .env file
 load_dotenv()
@@ -19,11 +18,14 @@ docker_run_command = f"docker run --name {DB_NAME} -p {DB_PORT}:{DB_PORT} -e POS
 # Run the docker command
 os.system(docker_run_command)
 
-# Add any additional commands or configurations as needed
-# For example, you might want to wait for the PostgreSQL container to be ready
-# before proceeding with other tasks. You can use tools like "wait-for-it" for this purpose.
-# Check https://github.com/vishnubob/wait-for-it for more details.
+# Add a delay to wait for PostgreSQL to initialize (adjust the sleep time as needed)
+time.sleep(10)
+print("Wait...")
+time.sleep(5)
 
+# Continue with database creation
+create_db_command = f"createdb -h {DB_HOST} -p {DB_PORT} -U postgres {DB_NAME}"
+os.system(create_db_command)
 
 # dont foget for : (bash)  chmod +x run_postgres.py
 # chmod u+x run_postgres.py

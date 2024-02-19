@@ -1,5 +1,4 @@
-
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template
 import psycopg2
 from psycopg2 import Error
 
@@ -15,19 +14,23 @@ class MyApp:
         self.app.route('/students')(self.students)
         self.app.route('/subjects')(self.subjects)
         self.app.route('/teachers')(self.teachers)
-        
+
     def run(self):
         self.app.run(debug=True, port=5005)
 
     def db_connection(self):
         try:
-            return psycopg2.connect(user='postgres', password='sergio', host='localhost', port='5432', dbname='postgres')
+            return psycopg2.connect(
+                user="postgres",
+                password=12345,
+                host="localhost",
+                port="5432",
+                dbname="hw-07-postgres",
+            )
         except Error as e:
             print(f"Error connecting to PostgreSQL: {e}")
             return None
 
-
-        
     def query_db(self, query):
         conn = self.db_connection()
         if conn:
@@ -48,7 +51,7 @@ class MyApp:
     def grades(self):
         query = 'SELECT * FROM grades'
         grades = self.query_db(query)
-        
+
         message = 'No grades available' if not grades else None
         return render_template('grades.html', grades=grades, message=message)
 
@@ -60,26 +63,26 @@ class MyApp:
 
     def students(self):
         query = 'SELECT * FROM students'
-        
+
         students = self.query_db(query)
-        
+
         message = 'No students available' if not students else None
         return render_template('students.html', students=students, message=message)
 
     def subjects(self):
         query = 'SELECT * FROM subjects'
         subjects = self.query_db(query)
-        
+
         message = 'No subjects available' if not subjects else None
         return render_template('subjects.html', subjects=subjects, message=message)
 
     def teachers(self):
-        query = 'SELECT * FROM teachers'
+        query = "SELECT * FROM professors"
         teachers = self.query_db(query)
-        
+
         message = 'No teachers available' if not teachers else None
         return render_template('teachers.html', teachers=teachers, message=message)
-    
+
 if __name__ == '__main__':
     my_app = MyApp()
     my_app.run()

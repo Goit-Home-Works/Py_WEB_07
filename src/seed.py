@@ -3,8 +3,8 @@ import faker
 from random import randint, choice
 from sqlalchemy import select
 
-from models import Group, Student, Professor, Grade, Subject
-from db import session
+from models.models import Group, Student, Professor, Grade, Subject
+from models.db import session
 
 NUMBER_STUDENTS = 50
 NUMBER_PROFESSORS = 5
@@ -15,7 +15,7 @@ FAKE_SUBJECTS = [
     "Python Web",
     "Python Data Science",
     "HTML CSS",
-    "Soft Skils",
+    "Soft Skills",
     "Databases SQL, noSQL",
     "English",
     "Git",
@@ -50,9 +50,9 @@ def seed_professors():
 
 def seed_subjects():
     for name in FAKE_SUBJECTS:
-        session.add(
-            Subject(subject_name=name, professor_id=randint(1, NUMBER_PROFESSORS))
-        )
+        # Choose a random professor ID from the existing professors
+        professor_id = choice(range(1, NUMBER_PROFESSORS + 1))
+        session.add(Subject(subject_name=name, professor_id=professor_id))
     session.commit()
 
 
