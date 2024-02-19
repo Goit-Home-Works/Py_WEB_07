@@ -188,4 +188,33 @@ session.query(Student.fullname, func.round(func.avg(Grade.grade), 2).label('avg_
 
 ## ВИКОНАННЯ
 
-### run
+### run: 
+
+### вступна
+      python3 src/run_postgres.py
+
+### 1. 
+      python3 src/models/models.py
+
+### 2. 
+      (bash) alembic init alembic
+             alembic revision --autogenerate -m "Create tables"
+             alembic upgrade head
+
+### 3.
+      python3 src/seed.py
+
+### 4.
+      python3 src/my_select.py
+
+### 5.
+      
+
+### 6.
+      python3 src/cli_app.py
+
+## for check the DataBase:
+      python3 src/main.py 
+
+      open browser on  http://localhost:5005
+      
