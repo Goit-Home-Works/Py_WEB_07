@@ -207,8 +207,10 @@ session.query(Student.fullname, func.round(func.avg(Grade.grade), 2).label('avg_
 ### 4.
       python3 src/my_select.py
 
+## Additional task
+
 ### 5.
-      
+      python3 src/my_select.py
 
 ### 6.
       python3 src/cli_app.py
